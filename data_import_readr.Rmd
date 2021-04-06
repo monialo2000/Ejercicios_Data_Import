@@ -1,0 +1,149 @@
+---
+title: "Ejercicios Data Import"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+```{r setup, include = FALSE}
+library(tidyverse)
+library(datos)
+```
+
+# Data Import (package = readr)
+
+## Formato de comando read_*
+read_delim(file, delim, quote = "\"", escape_backslash = FALSE, escape_double = TRUE,
+  col_names = TRUE,  col_types = NULL, locale = default_locale(),  na = c("", "NA"),
+  quoted_na = TRUE, comment = "",  trim_ws = FALSE,  skip = 0,  n_max = Inf,
+  guess_max = min(1000, n_max),  progress = show_progress(),  skip_empty_rows = TRUE
+)
+## Crear archivo csv ejemplo y Leer archivo .csv (datos separados por comas)
+
+```{r read_csv}
+write_file(x="a,b,c\n1,2,3\n4,5,NA", file = "archivo.csv")
+csv_1 <- read_csv("archivo.csv")
+```
+
+## Crear archivo separado por punto y coma, y leerlo (datos separados por ; y , para punto decimal y . como grouping mark)
+```{r read_csv2}
+write_file(x = "a;b;c\n1;2;3\n4;5;NA", file = "archivo2.csv")
+csv_2 <- read_csv2("archivo2.csv")
+```
+
+## Leer Archivo con cualquier tipo de delimitador
+```{r read_delim}
+write_file(x="a|b|c\n1|2|3\n4|5|NA", file = "archivo3.csv")
+csv_3 <- read_delim("archivo3.csv", delim = "|")
+```
+
+## Leer Archivo de ancho fijo
+```{r read_fwf}
+write_file(x="a b c\n1 2 3\n4 5 NA", file = "archivo4.fwf")
+x = list(1, 3, 5)
+# csv_4 <- read_fwf(file = "archivo4.fwf", col_positions = c(1,3,5))
+## OJO! da error el read_fwd CON $ operator is invalid for atomic vectors Y NO HAY CASO QUE FUNCIONE, ver show traceback
+```
+## Leer Archivo con cualquier Tab (read_tsv o read_table)
+```{r read_tsv}
+write_file(x="a\tb\tc\n1\t2\t3\n4\t5\tNA", file = "archivo5.csv")
+csv_5 <- read_tsv("archivo5.csv")
+```
+
+## Parámetros útiles
+```{r params}
+#sin encabezados
+read_csv("archivo.csv", col_names = FALSE)
+#dar nombre a columnas
+read_csv("archivo.csv", col_names = c("A", "B", "C"))
+#saltear 1 registro
+read_csv("archivo.csv", skip = 1) #la tercer columna la define con tipo lógico
+#leer un subconjunto (cantidad de registros - si col_names = TRUE, la primer linea la cuenta como encabezado)
+read_csv("archivo.csv", n_max = 1)
+#Tomar un caracter como NA, notar que antes NA no lo tomaba como missing value - por eso definía CHAR)
+read_csv("archivo.csv", na = c("1", "NA"))
+
+```
+##Data types
+Las funciones de readr POR DEFAULT adivinan el tipo de los datos de cada columna, tomando 1000 casos para analizar, se puede cambiar la cantidad con el parámetro *guess_max*
+OJO!! no convierte en factor. Sino, se pueden definir los tipos dentro de la funcion read_*, con parámetro col_types = c()
+Si hay problemas de conversion, los mostrará y generará en el tibble el atributo problems.
+```{r data_types}
+# Para diagnosticar problemas: usar problems()
+x <- read_csv("archivo.csv", skip = 1) 
+problems(x) #hacer este comando en la consola. En realidad los problemas quedan con el atributo "problems" del objeto. Si no hay errores: va a mostrar 0 rows 
+
+
+# para definir nosotros los tipos de cada columna:En este caso va a tirar problemas porque no coinciden los tipos de datos 
+x <- read_csv("archivo.csv", 
+              col_types = cols(a = col_double(), b = col_logical(), C = col_factor()))  
+
+
+y <- parse_integer(c("1x", "blah", "3"))
+# problems(y)
+# argumento y es un data frame para read_* 
+#                un vector     para parse_*
+
+#para saltear columnas, por ejemplo porque están en blanco o tienen basura
+extra_blanks <- "foo,bar,baz,,,\naaa,100,ccc,,,\naaa,200.0,ccc,,,\n"
+extra_garbage <- "foo,bar,baz,xtra,xtra\naaa,100,ccc,xtra,xtra\naaa,200,ccc,xtra,xtra\n"
+
+#Solucion1. Funciona pero quedan el atributo problems
+col_spec <- cols(col_character(), col_integer(), col_character(), .default = col_skip())
+z1 <- read_csv(extra_blanks, col_types = col_spec)
+z2 <- read_csv(extra_garbage, col_types = col_spec)
+
+#Solucion2. Idem anterior, sigue arrastrando los errores en problems
+col_spec <- cols_only(col_character(), col_integer(), col_character())
+
+z3 <- readr::read_csv(extra_blanks, col_types = col_spec)
+z4 <- readr::read_csv(extra_garbage, col_types = col_spec)
+
+#Solución3. Idem anterior.
+col_spec <- cols_only(foo = col_character(), 
+                      bar = col_integer(), 
+                      baz = col_character())
+z5 <- readr::read_csv(extra_blanks, col_types = col_spec)
+z6 <- readr::read_csv(extra_garbage, col_types = col_spec)
+nueva1 <- z5 %>% 
+  select(foo, bar, baz)
+
+#la mejor solucion es trabajarlo con data.table con select 
+z7 <- data.table::fread(extra_blanks, select = 1:3)
+```
+## Col_function para guiar el parseado.
+Use a col_ function to guide parsing.
+• col_guess() - the default
+• col_character()
+• col_double(), col_euro_double()
+• col_datetime(format = "") Also
+col_date(format = ""), col_time(format = "")
+• col_factor(levels, ordered = FALSE)
+• col_integer()
+• col_logical()
+• col_number(), col_numeric()
+• col_skip()
+x <- read_csv("file.csv", col_types = cols(
+A = col_double(),
+B = col_logical(),
+C = col_factor()))
+
+Otra solución al problema de parseado es 
+- Leer como vectores de caracteres y luego parsear con una función parse_*
+```{r usando parseado}
+w <- read_csv("archivo.csv", col_types = cols(col_character(), col_character(), col_character()))
+w1 <- w
+
+w1$a <- parse_number(w$a)
+w1$b <- parse_number(w$b)
+w1$c <- parse_number(w$c)
+
+#aca quedaron todos definidos y quedò como NA missing data tanto w$c como w1$c
+#verificar que pasa en los casos anteriores con el NA
+```
+# falta write y leer datos no tabulares
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
