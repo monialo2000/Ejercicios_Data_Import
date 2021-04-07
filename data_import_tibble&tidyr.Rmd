@@ -1,0 +1,105 @@
+---
+title: "Tibble & Tidyr"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(datos)
+```
+# Tibble (package = Tibble)
+Un tibble es un data.frame mejorado
+El tibble hereda la clase del data.frame, pero mejora 3 comportamientos:
+- Creación de subconjuntos usando 
+  []siempre devuelve un tibble
+  [[]] o $ siempre devuelven un vector
+- Sin coincidencias parciales
+  se deben utilizar los nombres completos de las columnas al crear un subconjunto
+- impresión en la consola
+  Cuando se imprime un tibble, se muestra una vista concisa de los datos que se ajustan en   una pantalla
+
+Ademas:
+
+- Se puede ver el conjunto completo de los datos con view() o con glimpse
+- Se puede convertir en data frame con comando as.data.frame()
+
+Se puede construir:
+```{r tibble_construccion}
+# por columnas:
+tibble(x=1:3, y = c("a", "b", "c"))
+
+# por filas:
+tribble(~x,~y,
+1, "a",
+2, "b",
+3, "c")
+```
+
+## Otros comandos:
+```{r}
+#as_tibble() lleva listas, matrices, ts o data frames a tibble
+#enframe() convierte vectores en dataframes y viceversa
+#is_tibble() como is_atomic, is.data.frame(), is_numeric, etc. devuelve TRUE O FALSE)
+```
+
+# Tidy data
+Es una forma de organizar datos tabulares. Es consistente entre paquetes de tidyverse
+Una tabla es tidy si:
+cada fila es una observación
+cada columna es una variable
+cada celda es un valor único (para una observación y una variable)
+
+Facilita el acceso a las variables como vectores.
+Preserva las filas en las operaciones vectorizadas.
+
+
+
+# tidyr
+Se usa para reorganizar los datos.
+
+## Pivot: 
+ convierte tibble a formato "largo" o "ancho"
+```{r pivot}
+pivot_longer()
+pivot_longer_spec()
+pivot_wider()
+pivot_wider_spec()
+## vignette("pivot") para profundizar
+```
+
+## Rectangle:
+```{r unnest}
+unnest_longer()
+unnest_wider()
+hoist()
+## vignette("rectangle") para profundizar
+```
+
+## Nest:
+```{r nest}
+nest()
+unnest()
+## vignette("nest") para profundizar
+```
+
+## Complete:
+```{r na_missing_values}
+complete()
+drop_na()
+fill()
+replace_na()
+
+```
+
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
