@@ -140,10 +140,75 @@ w1$c <- parse_number(w$c)
 #aca quedaron todos definidos y quedò como NA missing data tanto w$c como w1$c
 #verificar que pasa en los casos anteriores con el NA
 ```
-# falta write y leer datos no tabulares
+Las opciones de paseado son:
+• col_guess() - default
+• col_character()
+• col_double(), col_euro_double()
+• col_datetime(format = "") también col_date(format = ""), col_time(format = "")
+• col_factor(levels, ordered = FALSE)
+• col_integer()
+• col_logical()
+• col_number(), col_numeric()
+• col_skip()
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+# Write
 
+## Archivo separado por comas
+```{r grabar_csv}
+write_csv(csv_1, "archivo_1.csv", na= "NA", append = FALSE, col_names = FALSE)
+```
+## Archivo con algun separador
+```{r grabar_delim}
+write_csv2(csv_2, "archivo_2.csv", na= "NA", append = FALSE, col_names = FALSE)
+```
+## Archivo csv para excel
+```{r grabar_csv_excel}
+write_excel_csv(csv_1, "archivo_1_excel.csv", na= "NA", append = FALSE, col_names = FALSE)
+```
+## Archivo con separador tab
+```{r grabar_tab}
+write_tsv(csv_2, "archivo_3.txt", na= "NA", append = FALSE, col_names = FALSE)
+```
+## cadena a archivo
+```{r grabar_cadena}
+cadena <- str_c(LETTERS, collapse = "")
+write_file(cadena, "cadena_1.txt", append = FALSE)
+```
+## vector elementos en lineas
+```{r grabar_cadena_en_lineas}
+cadena2 <- str_c(LETTERS) 
+write_lines(cadena2, "cadena_2.txt", append = FALSE)
+```
+## OBJETO a archivo RDS
+```{r grabar_objeto_a_archivo}
+cadena2 <- str_c(LETTERS) 
+write_rds(cadena2, "cadena_3.rds", compress = c("none", "gz", "bz2", "xz"))
+# despues este objeto se puede cargar en environment. load
+```
+
+# Leer datos no tabulares
+```{r datos_no_tabulares}
+#Leer un archivo en una sola cadena - genera un vector con 1 elemento que contiene la cadena leida
+nt1 <- read_file("archivo.csv", locale = default_locale())
+#Leer cada linea en una cadena
+nt2 <- read_lines("archivo.csv", locale = default_locale())
+#Leer un archivo en un vector cada caracter es una ocurrencia (toma \n como 1 caracter)
+nt3 <- read_file_raw("archivo.csv")
+#Leer cada linea en un vector - genera una lista con tantos vectores como lineas haya
+nt4 <- read_lines_raw("archivo.csv", skip =0, n_max = -1L, progress = interactive())
+#Leer archivo de log estilo Apache - un archivo normal da cualquier cosa
+read_log("archivo.csv", col_names = FALSE, col_types = NULL, skip =0, n_max = Inf, progress = interactive())
+```
+#Otros paquetes útiles para cargar archivos
+readxl    Excel 
+DBI       base de datos
+heaven    SPSS, Stata, SAS 
+jsonlite    json
+xml2        xml
+httr        web APIS
+rvest       HTML(web scrapping)
+
+__________
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
 The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
