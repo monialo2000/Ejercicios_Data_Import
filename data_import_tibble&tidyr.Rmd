@@ -61,19 +61,89 @@ Se usa para reorganizar los datos.
 
 ## Pivot: 
  convierte tibble a formato "largo" o "ancho"
-```{r pivot}
-pivot_longer()
-pivot_longer_spec()
-pivot_wider()
-pivot_wider_spec()
+```{r pivot_longer}
+Tabla_precios <- tribble(
+ ~Producto, ~`2001`, ~`2002`, ~`2003`,~`2004`,~`2005`, ~`2006`, ~`2007`,
+ "Harina", 100, 101, 105, 108, 110, 130, 150,
+ "Yerba", 200, 220, 215, 218, 220, 230, 250,
+ "Azucar",310, 345, 301, 356, 370, 380, 388)
+
+Tabla_precios_por_periodo <- pivot_longer(Tabla_precios, cols = c('2001':'2007'), names_to = "Periodo", values_to = "Precio")
+#pivot_longer(   ----> alarga el dataframe
+#   data,
+#   cols,
+#   names_to = "name",
+#   names_prefix = NULL,
+#   names_sep = NULL,
+#   names_pattern = NULL,
+#   names_ptypes = list(),
+#   names_transform = list(),
+#   names_repair = "check_unique",
+#   values_to = "value",
+#   values_drop_na = FALSE,
+#   values_ptypes = list(),
+#   values_transform = list(),
+#   ...
+# )
+```
+
+```{r pivot_wider}
+#pivot_wider(Tabla_precios_por_periodo, names_from = Período, values_from = pre) 
+prueba <- pivot_wider(Tabla_precios_por_periodo, names_from = Periodo, values_from = Precio)
+# pivot_wider(
+#   data,
+#   id_cols = NULL,
+#   names_from = name,
+#   names_prefix = "",
+#   names_sep = "_",
+#   names_glue = NULL,
+#   names_sort = FALSE,
+#   names_repair = "check_unique",
+#   values_from = value,
+#   values_fill = NULL,
+#   values_fn = NULL,
+#   ...
+# )
 ## vignette("pivot") para profundizar
 ```
 
 ## Rectangle:
-```{r unnest}
-unnest_longer()
-unnest_wider()
-hoist()
+Un data frame anidado es un data frame donde una columna (o más columnas) es una lista de data frames. Se puede crear a mano:
+## Nest
+```{r Nest}
+# Creamos un dataframe anidado en este caso como tibble 
+# como  data frame es un poco más trabajoso, porque por defaul data.frame trata listas como listas de columnas. En general se crean con tidyr::nest()
+df1 <- tibble(
+  g = c(1, 2, 3),
+  data = list(
+    tibble(x = 1, y = 2),
+    tibble(x = 4:5, y = 6:7),
+    tibble(x = 10)
+  )
+)
+
+df2 <-  tribble(
+~g, ~x, ~y,
+1, 1, 2,
+2, 4, 6,
+2, 5, 7,
+3, 10, NA
+)
+
+df2 %>% nest(data = c(x,y))
+
+#nest especifica cuales variales debe ser anidadas, otra alternativa es usar dplyr::group_by() para describir cuales variables deben permanecer fuera.
+
+df2 %>% group_by(g) %>% nest()
+
+# Lo opuesto a nest() es unnest(): se le da el nombre de una columna-lista que contiene data frames, y los une por filas repitiendo las columnas que quedaron fuera de la columna lista el nro. de veces necesario para que queden parejos (rectangular).
+
+df1 %>% unnest(data) 
+
+
+#unnest_longer()
+#unnest_wider()
+#hoist()
 ## vignette("rectangle") para profundizar
 ```
 
@@ -81,15 +151,62 @@ hoist()
 ```{r nest}
 nest()
 unnest()
-## vignette("nest") para profundizar
 ```
 
-## Complete:
-```{r na_missing_values}
-complete()
-drop_na()
-fill()
-replace_na()
+## Missing values:
+# Herramientas para missing values
+```{r complete}
+#complete() 
+# muestra explicitamente los missing values que existen en un data frame. Es útil para completar las combinaciones de datos que no existen. Si además se utiliza el argumento fill, no solo genera esa combinación, también lo completa con el valor definido en el argumento fill.
+#complete(data, ..., fill = list())
+# ... especifica las columnas a expandir. Pueden ser vectores atómicos o listas
+library(dplyr, warn.conflicts = FALSE)
+df3 <- tibble(
+  group = c(1:2, 1),
+  item_id = c(1:2, 2),
+  item_name = c("a", "b", "b"),
+  value1 = 1:3,
+  value2 = 4:6
+)
+df3 %>% complete(group, nesting(item_id, item_name))
+
+df3 %>% complete(group, nesting(item_id, item_name), fill = list(value1 = 0))
+```
+
+```{r drop_na}
+#drop_na() no considera las filas que contienen missing values
+
+df <- tibble(x = c(1, 2, NA), y = c("a", NA, "b"))
+df %>% drop_na()
+```
+```{r fill}
+# fill() llena los missing values en las columnas que se seleccionan, usando el valor anterior o posterior.
+# fill(data,..., .direction = c("down", "up", "downup", "updown"))
+sales <- tibble::tribble(
+  ~quarter, ~year, ~sales,
+  "Q1",    2000,    66013,
+  "Q2",      NA,    69182,
+  "Q3",      NA,    53175,
+  "Q4",      NA,    21001,
+  "Q1",    2001,    46036,
+  "Q2",      NA,    58842,
+  "Q3",      NA,    44568,
+  "Q4",      NA,    50197,
+  "Q1",    2002,    39113,
+  "Q2",      NA,    41668,
+  "Q3",      NA,    30144,
+  "Q4",      NA,    52897,
+  "Q1",    2004,    32129,
+  "Q2",      NA,    67686,
+  "Q3",      NA,    31768,
+  "Q4",      NA,    49094
+)
+sales %>% fill(year)
+```
+```{r replace_na}
+# replace_na() reemplaza los NA por el valor indicado
+vector <- c("a", NA, "b")
+replace_na(vector, ".")
 
 ```
 
