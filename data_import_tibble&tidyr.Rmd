@@ -107,6 +107,117 @@ prueba <- pivot_wider(Tabla_precios_por_periodo, names_from = Periodo, values_fr
 ## vignette("pivot") para profundizar
 ```
 
+
+
+## Missing values:
+# Herramientas para missing values
+
+
+```{r drop_na}
+#drop_na() no considera las filas que contienen missing values
+
+df <- tibble(x = c(1, 2, NA), y = c("a", NA, "b"))
+df %>% drop_na()
+```
+```{r fill}
+# fill() llena los missing values en las columnas que se seleccionan, usando el valor anterior o posterior.
+# fill(data,..., .direction = c("down", "up", "downup", "updown"))
+sales <- tibble::tribble(
+  ~quarter, ~year, ~sales,
+  "Q1",    2000,    66013,
+  "Q2",      NA,    69182,
+  "Q3",      NA,    53175,
+  "Q4",      NA,    21001,
+  "Q1",    2001,    46036,
+  "Q2",      NA,    58842,
+  "Q3",      NA,    44568,
+  "Q4",      NA,    50197,
+  "Q1",    2002,    39113,
+  "Q2",      NA,    41668,
+  "Q3",      NA,    30144,
+  "Q4",      NA,    52897,
+  "Q1",    2004,    32129,
+  "Q2",      NA,    67686,
+  "Q3",      NA,    31768,
+  "Q4",      NA,    49094
+)
+sales %>% fill(year)
+```
+```{r replace_na}
+# replace_na() reemplaza los NA por el valor indicado
+vector <- c("a", NA, "b")
+replace_na(vector, ".")
+
+```
+
+## Expandir Archivos
+```{r complete}
+#complete() 
+# muestra explicitamente los missing values que existen en un data frame. Es útil para completar las combinaciones de datos que no existen. Si además se utiliza el argumento fill, no solo genera esa combinación, también lo completa con el valor definido en el argumento fill.
+#complete(data, ..., fill = list())
+#expand ... especifica las columnas a expandir. Pueden ser vectores atómicos o listas
+library(dplyr, warn.conflicts = FALSE)
+df3 <- tibble(
+  group = c(1:2, 1),
+  item_id = c(1:2, 2),
+  item_name = c("a", "b", "b"),
+  value1 = 1:3,
+  value2 = 4:6
+)
+df3 %>% complete(group, nesting(item_id, item_name))
+
+df3 %>% complete(group, nesting(item_id, item_name), fill = list(value1 = 0))
+```
+
+```{r expand}
+# genera un tibble con la combinacion de los valores ùnicos de cada columna especificada
+fruits <- tibble(
+  type   = c("apple", "orange", "apple", "orange", "orange", "orange"),
+  year   = c(2010, 2010, 2012, 2010, 2010, 2012),
+  size  =  factor(
+    c("XS", "S",  "M", "S", "S", "M"),
+    levels = c("XS", "S", "M", "L")
+  ),
+  weights = rnorm(6, as.numeric(size) + 2)
+)
+
+fr1 <- fruits %>% expand(type)
+fr2 <- fruits %>% expand(nesting(type, size, year))
+# Use with `full_seq()` to fill in values of continuous variables
+fruits %>% expand(type, size, full_seq(year, 1))
+# Use `anti_join()` to determine which observations are missing
+all <- fruits %>% expand(type, size, year)
+all
+all %>% dplyr::anti_join(fruits)
+# Use with `right_join()` to fill in missing rows
+fruits %>% dplyr::right_join(all)
+# name_repair "minimal", "unique", "check_unique", "universal", funciòn "apply", funciòn anònima estilo purrr
+
+```
+
+# Modelar Celdas
+se usan para reorganizar celdas: dividir o combinar celdas, y dejar asì valores aislados e individuales
+
+```{r separate}
+# separa por un separador indicado con argumento sep =
+sep1 <- separate(tabla3, tasa, sep = "/",
+into = c("casos", "pob"))
+
+```
+
+```{r unite}
+#unite sirve para unir columnas por ejemplo siglo + ult.dos posiciones d eanio  y hacerla una columna anio completo
+unite(tabla5, siglo, anio,
+col = "anio", sep = "")
+```
+
+
+```{r separate_rows}
+separate_rows(tabla3, tasa, sep = "/")
+```
+
+
+
 ## Rectangle:
 Un data frame anidado es un data frame donde una columna (o más columnas) es una lista de data frames. Se puede crear a mano:
 ## Nest
@@ -146,67 +257,3 @@ df1 %>% unnest(data)
 #hoist()
 ## vignette("rectangle") para profundizar
 ```
-
-## Nest:
-```{r nest}
-nest()
-unnest()
-```
-
-## Missing values:
-# Herramientas para missing values
-```{r complete}
-#complete() 
-# muestra explicitamente los missing values que existen en un data frame. Es útil para completar las combinaciones de datos que no existen. Si además se utiliza el argumento fill, no solo genera esa combinación, también lo completa con el valor definido en el argumento fill.
-#complete(data, ..., fill = list())
-# ... especifica las columnas a expandir. Pueden ser vectores atómicos o listas
-library(dplyr, warn.conflicts = FALSE)
-df3 <- tibble(
-  group = c(1:2, 1),
-  item_id = c(1:2, 2),
-  item_name = c("a", "b", "b"),
-  value1 = 1:3,
-  value2 = 4:6
-)
-df3 %>% complete(group, nesting(item_id, item_name))
-
-df3 %>% complete(group, nesting(item_id, item_name), fill = list(value1 = 0))
-```
-
-```{r drop_na}
-#drop_na() no considera las filas que contienen missing values
-
-df <- tibble(x = c(1, 2, NA), y = c("a", NA, "b"))
-df %>% drop_na()
-```
-```{r fill}
-# fill() llena los missing values en las columnas que se seleccionan, usando el valor anterior o posterior.
-# fill(data,..., .direction = c("down", "up", "downup", "updown"))
-sales <- tibble::tribble(
-  ~quarter, ~year, ~sales,
-  "Q1",    2000,    66013,
-  "Q2",      NA,    69182,
-  "Q3",      NA,    53175,
-  "Q4",      NA,    21001,
-  "Q1",    2001,    46036,
-  "Q2",      NA,    58842,
-  "Q3",      NA,    44568,
-  "Q4",      NA,    50197,
-  "Q1",    2002,    39113,
-  "Q2",      NA,    41668,
-  "Q3",      NA,    30144,
-  "Q4",      NA,    52897,
-  "Q1",    2004,    32129,
-  "Q2",      NA,    67686,
-  "Q3",      NA,    31768,
-  "Q4",      NA,    49094
-)
-sales %>% fill(year)
-```
-```{r replace_na}
-# replace_na() reemplaza los NA por el valor indicado
-vector <- c("a", NA, "b")
-replace_na(vector, ".")
-
-```
-
