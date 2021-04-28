@@ -203,6 +203,19 @@ se usan para reorganizar celdas: dividir o combinar celdas, y dejar asì valores
 sep1 <- separate(tabla3, tasa, sep = "/",
 into = c("casos", "poblacion"))
 
+#separa pero como hay diferencia de longitud da warning con drop del que sobra, se puede dejar con extra = "merge"
+#remove = FALSE deja la columna inicial ademàs de las que se separan
+a <- tibble(x = c("a,b,c", "d,e,f,g",   "h,i,j")) %>%
+  separate(x, c("one", "two",       "three"), remove = FALSE, fill = "right")
+
+df <- data.frame(x = c("x", "x y", "x y z", NA))
+df %>% separate(x, c("a", "b"))
+df %>% separate(x, c("a", "b"), extra = "drop", fill = "right")
+df %>% separate(x, c("a", "b"), extra = "merge", fill = "left")
+
+#en este caso como tiene 2 veces el separador ";"  pero tiene merge, lo deja todo junto   
+df1 <- data.frame(x = c("x: 123", "y: error: 7"))
+df1 %>% separate(x, c("key", "value"), ": ", extra = "merge")
 ```
 
 ```{r unite}
